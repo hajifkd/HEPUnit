@@ -1,4 +1,4 @@
-BeginPackage["UnitMath`"]
+BeginPackage["HEPUnit`"]
 
 unit::differentUnit = "Units are different";
 unity = <|"GeV" -> {1, 1}|>;
