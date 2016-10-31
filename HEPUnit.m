@@ -4,7 +4,11 @@ unit::differentUnit = "Units are different";
 unity = <|"GeV" -> {1, 1}|>;
 coeff[unit[a_, _Association, ___]] := a;
 unitTable[unit[_, b_Association, ___]] := b;
-unit[a_, b_Association, ___] /; And @@ (# == 0 & /@ b) := a;
+
+unit[a_, <||>, ___] := a;
+
+hasSameUnit[unit[_, b_Association, ___]] := b == unitTable[#] &;
+
 unit /: Format[unit[a_, b_Association, s_Association : <||>], 
    StandardForm] := With[{
     coeff = Times @@ (Lookup[s, #, {1}][[1]]^b[#] & /@ Keys[b]),
@@ -31,25 +35,23 @@ convert[from_unit, to : unit[_, a_Association, s___]] := Block[{
     ct := t[[1]],
     et := t[[2]]
     },
-   unit[cf ct^(-(ef/et)), ef/et a, s]
+   If[ef != 0, unit[cf ct^(-(ef/et)), ef/et a, s], cf ct^(-(ef/et))]
    ];
 
-unit /: Plus[unit[a_, b_Association, s___], unit[c_, b_, ___]] := 
-  unit[a + c, b, s];
-unit /: Plus[_unit, _unit] := (Message[unit::differentUnit]; $Failed);
+unit /: (f : Plus | Minus | Min | Max)
+  [unit[a_, b_Association, s___], unit[c_, b_, ___]] := unit[f[a, c], b, s];
 
-unit /: Minus[unit[a_, b_Association, s___], unit[c_, b_, ___]] := 
-  unit[a - c, b, s];
-unit /: Minus[_unit, _unit] := (Message[unit::differentUnit]; $Failed);
+unit /: (Plus | Minus | Min | Max)[_unit, _unit] := (Message[unit::differentUnit]; $Failed);
 
 unit /: Times[unit[a_, b_Association, s___], 
    unit[c_, d_Association, ___]] := Block[{
     keySet = Union[Keys[b], Keys[d]],
     assocList := # -> Lookup[b, #, 0] + Lookup[d, #, 0] & /@ keySet,
-    assoc := Association @@ assocList
+    assoc := Association @@ (assocList /. (_ -> 0) -> Sequence[])
     },
    unit[a c, assoc, s]
    ];
+
 unit /: Times[unit[a_, b_Association, s___], c_] := unit[a c, b, s];
 unit /: Times[c_, unit[a_, b_Association, s___]] := unit[c a, b, s];
 
@@ -65,6 +67,12 @@ m = unit[1, <|"m" -> 1|>];
 s = unit[1, <|"s" -> 1|>]; 
 kg = unit[1, <|"kg" -> 1|>]; 
 kelvin = unit[1, <|"kelvin" -> 1|>]; 
+
+GeVQ = hasSameUnit[GeV];
+mQ = hasSameUnit[m];
+sQ = hasSameUnit[s];
+kgQ = hasSameUnit[kg];
+kelvinQ = hasSameUnit[kelvin];
 
 c = 299792458 m/s;
 hbar = 1.0545718 10^-34 m^2 kg/s;
