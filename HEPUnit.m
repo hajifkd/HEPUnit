@@ -27,7 +27,7 @@ toNaturalUnit[unit[a_, b_Association, ___]] := With[{
    {a * coeff, exponent}
    ];
 
-convert[from_unit, to : unit[_, a_Association, s___]] := Block[{
+convert[from_unit, to_unit] := Block[{
     f = toNaturalUnit[from],
     t = toNaturalUnit[to],
     cf := f[[1]],
@@ -35,13 +35,14 @@ convert[from_unit, to : unit[_, a_Association, s___]] := Block[{
     ct := t[[1]],
     et := t[[2]]
     },
-   If[ef != 0, unit[cf ct^(-(ef/et)), ef/et a, s], cf ct^(-(ef/et))]
+   cf ct^(-(ef/et)) to^(ef/et)
    ];
 
-unit /: (f : Plus | Minus | Min | Max)
-  [unit[a_, b_Association, s___], unit[c_, b_, ___]] := unit[f[a, c], b, s];
+unit /: (f : Plus | Minus | Min | Max) [
+  unit[a_, b_Association, s___], unit[c_, b_, ___]] := unit[f[a, c], b, s];
 
-unit /: (Plus | Minus | Min | Max)[_unit, _unit] := (Message[unit::differentUnit]; $Failed);
+unit /: (Plus | Minus | Min | Max) [_unit, _unit] :=
+  (Message[unit::differentUnit]; $Failed);
 
 unit /: Times[unit[a_, b_Association, s___], 
    unit[c_, d_Association, ___]] := Block[{
@@ -55,6 +56,7 @@ unit /: Times[unit[a_, b_Association, s___],
 unit /: Times[unit[a_, b_Association, s___], c_] := unit[a c, b, s];
 unit /: Times[c_, unit[a_, b_Association, s___]] := unit[c a, b, s];
 
+unit /: Power[_unit, 0] := 1;
 unit /: Power[unit[a_, b_Association, s___], c_] := 
   unit[a^c, Association @@ (# -> c b[#] & /@ Keys[b]), s];
 unit /: (f : 
@@ -63,26 +65,26 @@ unit /: (f :
 
    
 GeV = unit[1, <|"GeV" -> 1|>];
-m = unit[1, <|"m" -> 1|>]; 
-s = unit[1, <|"s" -> 1|>]; 
+meter = unit[1, <|"meter" -> 1|>]; 
+second = unit[1, <|"second" -> 1|>]; 
 kg = unit[1, <|"kg" -> 1|>]; 
 kelvin = unit[1, <|"kelvin" -> 1|>]; 
 
 GeVQ = hasSameUnit[GeV];
-mQ = hasSameUnit[m];
-sQ = hasSameUnit[s];
+mQ = hasSameUnit[meter];
+sQ = hasSameUnit[second];
 kgQ = hasSameUnit[kg];
 kelvinQ = hasSameUnit[kelvin];
 
-c = 299792458 m/s;
-hbar = 1.0545718 10^-34 m^2 kg/s;
-hbarc = 1.97326979 10^-16 m GeV;
-kB = 8.61733034 10^-14 GeV/kelvin;
-G = 6.67408 10^-11 m^3/kg /s^2;
+c0 = 299792458 meter / second;
+hbar = 1.0545718 10^-34 meter^2 kg / second;
+hbarc = 1.97326979 10^-16 meter GeV;
+kB = 8.61733034 10^-14 GeV / kelvin;
+G = 6.67408 10^-11 meter^3 / kg / second^2;
 
-unity["m"] = {1/coeff[hbarc], -1};
-unity["s"] = {1 / coeff[hbarc / c], -1};
-unity["kg"] = {coeff[hbarc c / hbar], 1};
+unity["meter"] = {1/coeff[hbarc], -1};
+unity["second"] = {1 / coeff[hbarc / c0], -1};
+unity["kg"] = {coeff[hbarc c0 / hbar], 1};
 unity["kelvin"] = {coeff[kB], 1};
 
 EndPackage[]
